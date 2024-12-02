@@ -58,7 +58,10 @@ class Starter(ModuleInterface):
 		self.src_path = kwargs.get("src_path")
 		self.dest_path = kwargs.get("dest_path")
 		self.dataset_name = kwargs.get("dataset_name")
-		self.preprocessor = PREPROCESSOR.get(self.dataset_name)(src_path=self.src_path, dest_path=self.dest_path)
+		if self.dataset_name not in PREPROCESSOR:
+			raise ValueError(f"Dataset {self.dataset_name} is not supported")
+
+		self.preprocessor = PREPROCESSOR.get(self.dataset_name)
 
 	def run(self, **kwargs):
 		print(self.src_path, self.dest_path, self.dataset_name)
