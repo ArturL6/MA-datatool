@@ -47,7 +47,6 @@ def main():
 		# Dynamically import the module based on the selected task
 		module_name = f"tasks.{args.task}"  # Assuming modules are in a 'tasks' subpackage
 		task_module = importlib.import_module(module_name)
-		print(task_module)
 
 		# Check if the module has a `run` function
 		if hasattr(task_module, "Starter"):

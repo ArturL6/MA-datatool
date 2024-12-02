@@ -1,3 +1,4 @@
+import glob
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Union
@@ -22,11 +23,18 @@ class BasePreparation(ABC):
 			src_path (Union[str, Path]): The source path to the data.
 			dest_path (Union[str, Path]): The destination path to the data.
 		"""
-
 		self.src_path = Path(src_path)
 		self.dest_path = Path(dest_path)
 		self.label_subdir = label_subdir
 		self.image_subdir = image_subdir
+
+	def _get_subdirs(self):
+		"""Get the subdirectories of the source path."""
+		label_path = self.src_path / self.label_subdir
+		label_dirs = list((label_path).glob("**"))
+		subdir_strings = [str(subdir.relative_to(label_path)) for subdir in label_dirs]
+		print(subdir_strings)
+		return label_dirs
 
 	@abstractmethod
 	def labels_for_semantic_segmentation(self):
@@ -41,10 +49,11 @@ class BasePreparation(ABC):
 
 class CityscapesPreprocessor(BasePreparation):
 	def labels_for_semantic_segmentation(self):
-		return super().labels_for_semantic_segmentation()
+		super().labels_for_semantic_segmentation()
+		self._get_subdirs()
 
 	def visualize_labels(self):
-		return super().visualize_labels()
+		super().visualize_labels()
 
 
 PREPROCESSOR = {
@@ -57,18 +66,21 @@ class Starter(ModuleInterface):
 	def __init__(self, **kwargs):
 		self.src_path = kwargs.get("src_path")
 		self.dest_path = kwargs.get("dest_path")
+		label_path = kwargs.get("label_path", "")
+		image_path = kwargs.get("image_path", "")
 		self.dataset_name = kwargs.get("dataset_name")
+
+		if not isinstance(self.src_path, str):
+			self.src_path = str(self.src_path)
+		if not isinstance(self.dest_path, str):
+			self.dest_path = str(self.dest_path)
+
 		if self.dataset_name not in PREPROCESSOR:
 			raise ValueError(f"Dataset {self.dataset_name} is not supported")
 
 		self.preprocessor = PREPROCESSOR.get(self.dataset_name)
+		self.preprocessor = self.preprocessor(self.src_path, self.dest_path, label_path, image_path)
 
 	def run(self, **kwargs):
-		print(self.src_path, self.dest_path, self.dataset_name)
-
-
-def run(**kwargs):
-	src_path = kwargs.get("src_path")
-	dest_path = kwargs.get("dest_path")
-	dataset_name = kwargs.get("dataset_name")
-	print(src_path, dest_path, dataset_name)
+		self.preprocessor.labels_for_semantic_segmentation()
+		self.preprocessor.visualize_labels()
